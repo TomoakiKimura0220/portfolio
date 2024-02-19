@@ -5,7 +5,7 @@
 - 書籍を一括管理できるWebアプリ
 - ユーザーごとに書籍の登録とメモが可能
 
-### ビジュアル（UI）の紹介
+### デモ動画
 [![](http://markdown-videos-api.jorgenkh.no/youtube/lPSApYnldCg)](https://youtu.be/lPSApYnldCg)
 
 ### 製作期間と製作時期
