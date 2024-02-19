@@ -6,8 +6,7 @@
 - ユーザーごとに書籍の登録とメモが可能
 
 ### ビジュアル（UI）の紹介
-[![](https://markdown-videos-api.jorgenkh.no/youtu.be/lPSApYnldCg)](https://youtu.be/lPSApYnldCg)
-https://youtu.be/lPSApYnldCg
+[![Alt text](http://markdown-videos-api.jorgenkh.no/youtube/lPSApYnldCg)](https://youtu.be/lPSApYnldCg)
 
 ### 製作期間と製作時期
 - 大学の講義内で期末課題として製作
