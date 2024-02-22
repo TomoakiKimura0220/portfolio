@@ -1,0 +1,29 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model USERS_TABLE{
+  User_ID Int @id @default(autoincrement())
+  User_Name String @unique
+  User_Password String
+  Records BOOK_READING_RECORDS_TABLE[]
+}
+
+model BOOK_READING_RECORDS_TABLE{
+  Record_ID  Int @id @default(autoincrement())
+  User USERS_TABLE @relation(fields: [Record_User_ID], references: [User_ID])
+  Record_User_ID Int
+  Record_Title String
+  Record_Book_Image_Url String
+  Record_Content String ?
+  Record_CreateDate DateTime @default(now())
+  Record_UpdateDate DateTime @updatedAt
+}

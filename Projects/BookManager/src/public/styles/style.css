@@ -1,0 +1,21 @@
+/* style.css */
+
+.book-card {
+    width: 200px;
+    text-align: center; /* カード内のテキストを中央揃え */
+    margin: 10px;
+}
+
+.book-img {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 10px;
+}
+
+.book-details {
+    margin-top: 10px;
+}
+
+.card-text {
+    margin-bottom: 10px;
+}

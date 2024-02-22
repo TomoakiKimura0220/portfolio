@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdownエディタ</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- highlight.js v11.9.0 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <!-- marked.js -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@3.0.7/marked.min.js"></script>
+    <!-- Spectrum Color Picker CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.1/spectrum.min.css">
+    <!-- Spectrum Color Picker JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.1/spectrum.min.js"></script>
+    <style>
+        .toolbar {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+        .editor-container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .md-input{
+            flex: 1;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .md-preview {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+        #markdown-input {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+        }
+        #markdown-preview {
+            height: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <h2>Markdownエディタ</h2>
+    <div class="toolbar bg-light">
+        <button onclick="toggleBold()" class="btn btn-info ml-2">太字</button>
+        <button onclick="toggleItalic()" class="btn btn-info ml-2">斜体</button>
+        <button onclick="insertHeader()" class="btn btn-info ml-2">見出し</button>
+        <button onclick="insertStrikethrough()" class="btn btn-info ml-2">取り消し線</button>
+        <button onclick="insertBulletList()" class="btn btn-info ml-2">箇条書き</button>
+        <button onclick="insertNumberedList()" class="btn btn-info ml-2">番号付き</button>
+        <button onclick="insertCheckbox()" class="btn btn-info ml-2">チェックボックス</button>
+        <button onclick="insertBlockquote()" class="btn btn-info ml-2">引用</button>
+        <button onclick="insertCode()" class="btn btn-info ml-2">コード</button>
+        <button onclick="insertTable()" class="btn btn-info ml-2">表</button>
+        <button onclick="insertLink()" class="btn btn-info ml-2">リンク</button>
+        <button onclick="insertImage()" class="btn btn-info ml-2">画像</button>
+        <p></p>
+        <!-- カラーパレット -->
+        <div id="colorPalette">
+            <button onclick="openColorPicker()" class="btn btn-info ml-2" title="テキストエリアの文字列を範囲選択した状態でこのボタンを押すとフォントの色を変更できます">フォントの色</button>
+            <input type="color" id="colorPicker">
+            <button onclick="exportMarkdown()" class="btn btn-info ml-2">Markdownエクスポート</button>
+            <button onclick="exportHTML()" class="btn btn-info ml-2">HTMLエクスポート</button>
+        </div>
+    </div>
+    <div class="editor-container">
+        <div class="md-input">
+            <textarea id="markdown-input" placeholder="ここにMarkdownを入力してください"></textarea>
+        </div>
+        <div class="md-preview" id="markdown-preview"></div>
+    </div>
+    <script>
+        // marked.jsの設定を行う
+        marked.setOptions({
+            // コードブロックのハイライトにhljsを使用する設定
+            highlight: function (code, language) {
+                // 言語がhljsでサポートされているかチェックし、サポートされていなければplaintextを使用
+                const validLanguage = hljs.getLanguage(language) ? language : 'plaintext';
+                // hljsを使用してコードをハイライト
+                return hljs.highlight(validLanguage, code).value;
+            }
+        });
+
+        // highlight.jsの初期化
+        document.addEventListener('DOMContentLoaded', (event) => {
+            document.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightBlock(block);
+            });
+        });
+
+        // HTML要素を取得
+        const markdownInput = document.getElementById('markdown-input');
+        const markdownPreview = document.getElementById('markdown-preview');
+        const imageInput = document.getElementById('image-input');
+        const colorPalette = document.getElementById('colorPalette');
+        const colorPicker = document.getElementById('colorPicker');
+
+        // Markdownのプレビューを更新する関数
+        function updatePreview() {
+            const markdownContent = sanitizeInput(markdownInput.value);//入力内容をサニタイズ
+            //const markdownContent = markdownInput.value;
+            const htmlContent = marked(markdownContent);
+            markdownPreview.innerHTML = htmlContent;
+        }
+        // ページ読み込み時とテキストエリアの変更時にプレビューを更新
+        window.addEventListener('DOMContentLoaded', updatePreview);
+        markdownInput.addEventListener('input', updatePreview);
+
+        //入力内容をサニタイズ
+        function sanitizeInput(input) {
+            // spanタグ以外のすべてのタグを削除
+            let sanitizedInput = input.replace(/<(?!\/?span\b)[^>]*>/gi, '');
+            // spanタグ内のstyle属性以外の属性を削除
+            sanitizedInput = sanitizedInput.replace(/<span\b[^>]*>/gi, function(match) {
+                // style属性からcolorの値を抽出
+                const colorMatch = match.match(/style="[^"]*color:\s*([^;"]*)[^"]*"/);
+                const color = colorMatch ? colorMatch[1] : '';
+                // colorの値を含む新しいspanタグを作成
+                return `<span style="color: ${color};">`;
+            });
+            return sanitizedInput;
+        }
+
+        // テキストエリアから選択範囲のテキストを取得
+        function getSelectedText() {
+            const start = markdownInput.selectionStart;
+            const end = markdownInput.selectionEnd;
+            return start !== end ? markdownInput.value.substring(start, end) : '';
+        }
+
+        // カラーパレットを開く
+        function openColorPicker() {
+            // 選択されたテキストを取得
+            const selectedText = getSelectedText();
+            // テキストエリアに色が適用されたテキストを挿入
+            applyColorToText(selectedText);
+        }
+        // カラーパレットの適用ボタンが押された時の処理
+        function applyColorToText() {
+            // colorPickerが存在するか確認
+            if (colorPicker) {
+                const selectedColor = colorPicker.value;
+                const selectedText = getSelectedText();
+
+                if (selectedText) {
+                    // テキストエリアから選択範囲を削除
+                    const currentCursorPosition = markdownInput.selectionStart;
+                    const textBeforeCursor = markdownInput.value.substring(0, currentCursorPosition);
+                    const textAfterCursor = markdownInput.value.substring(currentCursorPosition);
+                    // 色で装飾されたテキストを生成
+                    const coloredText = `<span style="color: ${selectedColor};">${selectedText}</span>`;
+                    // テキストエリアに挿入
+                    markdownInput.value = `${textBeforeCursor}${coloredText}${textAfterCursor}`;
+
+                    // カーソル位置は変更しない
+                    updatePreview();
+                }
+            }
+            else {
+                console.log('colorPickerが見つかりません');
+            }
+        }
+
+        // テキストを太字にする
+        function toggleBold() {
+            const selectedText = getSelectedText() || 'テキストを太字にする';
+            insertText(`**${selectedText}**`);
+        }
+
+        // テキストを斜体にする
+        function toggleItalic() {
+            const selectedText = getSelectedText() || 'テキストを斜体にする';
+            insertText(`*${selectedText}*`);
+        }
+
+        // テキストを見出しにする
+        function insertHeader() {
+            const selectedText = getSelectedText() || '# 見出し';
+            insertText(`${selectedText}\n`);
+        }
+
+        // テキストを取り消し線にする
+        function insertStrikethrough() {
+            const selectedText = getSelectedText() || '取り消し線';
+            insertText(`~~${selectedText}~~`);
+        }
+
+        // テキストを箇条書きにする
+        function insertBulletList() {
+            // 未選択の場合は現在のカーソル位置に箇条書きを挿入
+            const selectedText = getSelectedText() || '- アイテム';
+            insertText(`${selectedText}\n`);
+        }
+
+        // テキストを番号付きリストにする
+        function insertNumberedList() {
+            // 未選択の場合は現在のカーソル位置に番号付きリストを挿入
+            const selectedText = getSelectedText() || '1. アイテム';
+            insertText(`${selectedText}\n`);
+        }
+
+        // テキストをチェックボックスにする
+        function insertCheckbox() {
+            // 未選択の場合は現在のカーソル位置にチェックボックスを挿入
+            const selectedText = getSelectedText() || '- [ ] アイテム';
+            insertText(`${selectedText}\n`);
+        }
+
+        // テキストをBlockquoteにする
+        function insertBlockquote() {
+            // 未選択の場合は現在のカーソル位置にBlockquoteを挿入
+            const selectedText = getSelectedText() || '> 引用';
+            insertText(`${selectedText}\n`);
+        }
+
+        // テキストをコードブロックにする
+        function insertCode() {
+            // 未選択の場合は現在のカーソル位置にコードブロックを挿入
+            const selectedText = getSelectedText() || '```\nコード\n```';
+            insertText(`${selectedText}\n`);
+        }
+
+        // テキストを表にする
+        function insertTable() {
+            // 未選択の場合は現在のカーソル位置に表を挿入
+            const selectedText = getSelectedText() || '| Header 1 | Header 2 |\n| -------- | -------- |\n| Cell 1   | Cell 2   |';
+            insertText(`${selectedText}\n`);
+        }
+
+        // テキストにリンクを挿入
+        function insertLink() {
+            const url = prompt('リンク先のURLを入力してください', 'https://example.com');
+            if (url) {
+                // 未選択の場合は現在のカーソル位置にリンクを挿入
+                const selectedText = getSelectedText() || 'リンクテキスト';
+                insertText(`[${selectedText}](${url})`);
+            }
+        }
+
+        // テキストに画像リンクを挿入
+        function insertImage() {
+            const url = prompt('画像のURLを入力してください', 'https://example.com/image.jpg');
+            if (url) {
+                // 未選択の場合は現在のカーソル位置に画像を挿入
+                const selectedText = getSelectedText() || '代替テキスト';
+                insertText(`![${selectedText}](${url})`);
+            }
+        }
+
+        // テキストエリアにテキストを挿入
+        function insertText(text) {
+            const currentCursorPosition = markdownInput.selectionStart;
+            const textBeforeCursor = markdownInput.value.substring(0, currentCursorPosition);
+            const textAfterCursor = markdownInput.value.substring(currentCursorPosition);
+
+            // テキストエリアに挿入
+            markdownInput.value = `${textBeforeCursor}${text}${textAfterCursor}`;
+
+            // カーソル位置を更新
+            const updatedCursorPosition = currentCursorPosition + text.length;
+            markdownInput.setSelectionRange(updatedCursorPosition, updatedCursorPosition);
+            updatePreview();
+        }
+
+        // 画像を挿入するボタンが押された時の処理
+        function openImageUploader() {
+            // input 要素をクリックしてユーザーに画像を選択させる
+            imageInput.click();
+        }
+
+        // Markdownファイルをエクスポート
+        function exportMarkdown() {
+            const markdownContent = markdownInput.value;
+            // ファイル名をユーザーに入力させる
+            const fileName = prompt('ファイル名を入力してください', 'exportedMarkdown.md');
+            if (fileName) {
+                const blob = new Blob([markdownContent], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                // a 要素を生成して、ファイルのダウンロードを行う
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName; // ユーザーが入力したファイル名を使用
+                a.click();
+                // 不要な要素を削除
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+        // HTMLファイルをエクスポート
+        function exportHTML() {
+            const htmlContent = markdownPreview.innerHTML;
+            // ファイル名をユーザーに入力させる
+            const fileName = prompt('ファイル名を入力してください', 'exportedHTML.html');
+            if (fileName) {
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                // a 要素を生成して、ファイルのダウンロードを行う
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName; // ユーザーが入力したファイル名を使用
+                a.click();
+                // 不要な要素を削除
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        // テキストエリアとプレビューエリアのスクロールを同期
+        window.addEventListener('DOMContentLoaded', (event) => {
+            const markdownInput = document.getElementById('markdown-input');
+            const markdownPreview = document.getElementById('markdown-preview');
+            // テキストエリアのスクロールを監視
+            markdownInput.addEventListener('scroll', function() {
+                const scrollPercentage = this.scrollTop / (this.scrollHeight - this.clientHeight);
+                markdownPreview.scrollTop = scrollPercentage * (markdownPreview.scrollHeight - markdownPreview.clientHeight);
+            });
+            // プレビューエリアのスクロールを監視
+            markdownPreview.addEventListener('scroll', function() {
+                const scrollPercentage = this.scrollTop / (this.scrollHeight - this.clientHeight);
+                markdownInput.scrollTop = scrollPercentage * (markdownInput.scrollHeight - markdownInput.clientHeight);
+            });
+        });
+        
+    </script>
+</body>
+</html>
