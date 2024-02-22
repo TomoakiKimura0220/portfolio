@@ -36,7 +36,7 @@
 - カレンダー形式でタスクを表示できるスケジュール管理用Webアプリ
 
 ### デモ動画
-[![](http://markdown-videos-api.jorgenkh.no/youtube/)](https://youtu.be/)
+[![](http://markdown-videos-api.jorgenkh.no/youtube/7wY413eWs34)](https://youtu.be/7wY413eWs34)
 
 ### 製作期間と製作時期
 - 大学の講義内で製作
@@ -60,7 +60,7 @@
 - 直感的で使いやすいMarkdownエディタを目指した
 
 ### デモ動画
-[![](http://markdown-videos-api.jorgenkh.no/youtube/)](https://youtu.be/)
+[![](http://markdown-videos-api.jorgenkh.no/youtube/3aq7QApzbtw)](https://youtu.be/3aq7QApzbtw)
 
 ### 製作期間と製作時期
 - JavaScriptの学習のために作成
