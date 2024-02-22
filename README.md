@@ -7,6 +7,7 @@
 
 ### デモ動画
 [![](http://markdown-videos-api.jorgenkh.no/youtube/lPSApYnldCg)](https://youtu.be/lPSApYnldCg)
+[![](https://github.com/TomoakiKimura0220/portfolio/raw/main/mov/BookManager.mov)]
 
 ### 製作期間と製作時期
 - 大学の講義内で期末課題として製作
